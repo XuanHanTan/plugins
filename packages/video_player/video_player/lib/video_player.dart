@@ -254,7 +254,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   ClosedCaptionFile? _closedCaptionFile;
   Timer? _timer;
-  bool _isDisposed = false;
+  bool isDisposed = false;
   Completer<void>? _creatingCompleter;
   StreamSubscription<dynamic>? _eventSubscription;
   late _VideoAppLifeCycleObserver _lifeCycleObserver;
@@ -311,7 +311,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     final Completer<void> initializingCompleter = Completer<void>();
 
     void eventListener(VideoEvent event) {
-      if (_isDisposed) {
+      if (isDisposed) {
         return;
       }
 
@@ -366,52 +366,20 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         .listen(eventListener, onError: errorListener);
     return initializingCompleter.future;
   }
-  Future<void> returnInitialize() async {
-    late DataSource dataSourceDescription;
-    switch (dataSourceType) {
-      case DataSourceType.asset:
-        dataSourceDescription = DataSource(
-          sourceType: DataSourceType.asset,
-          asset: dataSource,
-          package: package,
-        );
-        break;
-      case DataSourceType.network:
-        dataSourceDescription = DataSource(
-          sourceType: DataSourceType.network,
-          uri: dataSource,
-          formatHint: formatHint,
-          httpHeaders: httpHeaders,
-        );
-        break;
-      case DataSourceType.file:
-        dataSourceDescription = DataSource(
-          sourceType: DataSourceType.file,
-          uri: dataSource,
-        );
-        break;
-    }
-    _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
-        kUninitializedTextureId;
-  }
-
-  Future<void> pauseDispose() async {
-    await _videoPlayerPlatform.dispose(_textureId);
-  }
 
   @override
   Future<void> dispose() async {
     if (_creatingCompleter != null) {
       await _creatingCompleter!.future;
-      if (!_isDisposed) {
-        _isDisposed = true;
+      if (!isDisposed) {
+        isDisposed = true;
         _timer?.cancel();
         await _eventSubscription?.cancel();
         await _videoPlayerPlatform.dispose(_textureId);
       }
       _lifeCycleObserver.dispose();
     }
-    _isDisposed = true;
+    isDisposed = true;
     super.dispose();
   }
 
@@ -439,14 +407,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   Future<void> _applyLooping() async {
-    if (!value.isInitialized || _isDisposed) {
+    if (!value.isInitialized || isDisposed) {
       return;
     }
     await _videoPlayerPlatform.setLooping(_textureId, value.isLooping);
   }
 
   Future<void> _applyPlayPause() async {
-    if (!value.isInitialized || _isDisposed) {
+    if (!value.isInitialized || isDisposed) {
       return;
     }
     if (value.isPlaying) {
@@ -457,7 +425,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       _timer = Timer.periodic(
         const Duration(milliseconds: 500),
         (Timer timer) async {
-          if (_isDisposed) {
+          if (isDisposed) {
             return;
           }
           final Duration? newPosition = await position;
@@ -479,14 +447,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   }
 
   Future<void> _applyVolume() async {
-    if (!value.isInitialized || _isDisposed) {
+    if (!value.isInitialized || isDisposed) {
       return;
     }
     await _videoPlayerPlatform.setVolume(_textureId, value.volume);
   }
 
   Future<void> _applyPlaybackSpeed() async {
-    if (!value.isInitialized || _isDisposed) {
+    if (!value.isInitialized || isDisposed) {
       return;
     }
 
@@ -503,7 +471,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   /// The position in the current video.
   Future<Duration?> get position async {
-    if (_isDisposed) {
+    if (isDisposed) {
       return null;
     }
     return await _videoPlayerPlatform.getPosition(_textureId);
@@ -515,7 +483,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// If [moment] is outside of the video's full range it will be automatically
   /// and silently clamped.
   Future<void> seekTo(Duration position) async {
-    if (_isDisposed) {
+    if (isDisposed) {
       return;
     }
     if (position > value.duration) {
