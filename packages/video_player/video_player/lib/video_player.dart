@@ -366,6 +366,38 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         .listen(eventListener, onError: errorListener);
     return initializingCompleter.future;
   }
+  Future<void> returnInitialize() async {
+    late DataSource dataSourceDescription;
+    switch (dataSourceType) {
+      case DataSourceType.asset:
+        dataSourceDescription = DataSource(
+          sourceType: DataSourceType.asset,
+          asset: dataSource,
+          package: package,
+        );
+        break;
+      case DataSourceType.network:
+        dataSourceDescription = DataSource(
+          sourceType: DataSourceType.network,
+          uri: dataSource,
+          formatHint: formatHint,
+          httpHeaders: httpHeaders,
+        );
+        break;
+      case DataSourceType.file:
+        dataSourceDescription = DataSource(
+          sourceType: DataSourceType.file,
+          uri: dataSource,
+        );
+        break;
+    }
+    _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
+        kUninitializedTextureId;
+  }
+
+  Future<void> pauseDispose() async {
+    await _videoPlayerPlatform.dispose(_textureId);
+  }
 
   @override
   Future<void> dispose() async {
